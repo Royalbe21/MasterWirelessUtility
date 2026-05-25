@@ -1,0 +1,326 @@
+<Window x:Class="MasterWirelessUtility.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Master Wireless Utility" Height="720" Width="1120"
+        MinHeight="620" MinWidth="960"
+        Icon="Assets/AppIcon.ico"
+        Closing="Window_Closing">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="#202938" Padding="14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Foreground="White" FontSize="22" FontWeight="Bold" Text="Master Wireless Utility" />
+                    <TextBlock Foreground="#D1D5DB" Text="Windows 11 Wi-Fi adapter manager" />
+                </StackPanel>
+                <Button Grid.Column="1" Content="Lock Computer" Click="LockComputer_Click" />
+            </Grid>
+        </Border>
+
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <CheckBox x:Name="ShowTrayCheckBox" Content="Show Tray Icon" IsChecked="True" Checked="ShowTrayCheckBox_Changed" Unchecked="ShowTrayCheckBox_Changed" />
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock x:Name="StatusText" Text="Ready" />
+            </StatusBarItem>
+        </StatusBar>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="#F3F4F6" BorderBrush="#D1D5DB" BorderThickness="0,0,1,0" Padding="10">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top">
+                        <TextBlock Text="Adapters" FontWeight="Bold" FontSize="16" Margin="4" />
+                        <Button Content="Refresh Adapters" Click="RefreshAdapters_Click" />
+                    </StackPanel>
+
+                    <ListBox x:Name="AdaptersListBox" Margin="4" SelectionChanged="AdaptersListBox_SelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="2,5">
+                                    <TextBlock Text="{Binding InterfaceAlias}" FontWeight="Bold" />
+                                    <TextBlock Text="{Binding Name}" FontSize="11" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Badge}" FontSize="10" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+            <TabControl Grid.Column="1" Margin="8">
+                <TabItem Header="General">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="10">
+                            <TextBlock Text="Selected Adapter" FontSize="18" FontWeight="Bold" />
+                            <Border BorderBrush="#D1D5DB" BorderThickness="1" Padding="12" Margin="0,8,0,16">
+                                <StackPanel>
+                                    <TextBlock x:Name="GeneralAdapterNameText" FontSize="16" FontWeight="SemiBold" Text="No adapter selected" />
+                                    <TextBlock x:Name="GeneralAdapterAliasText" Margin="0,4,0,0" Text="Windows interface alias: Unknown" />
+                                    <TextBlock x:Name="GeneralAdapterBadgeText" Margin="0,4,0,0" FontWeight="SemiBold" Text="Adapter type: Unknown" />
+                                    <TextBlock x:Name="GeneralAdapterGuidText" Margin="0,4,0,0" FontSize="11" TextWrapping="Wrap" Text="Interface GUID: Unknown" />
+                                    <TextBlock x:Name="GeneralAdapterStateText" Margin="0,4,0,0" Text="State: Unknown" />
+                                </StackPanel>
+                            </Border>
+
+                            <WrapPanel>
+                                <Button Content="Scan Networks" Click="ScanNetworks_Click" />
+                                <Button Content="Disconnect" Click="Disconnect_Click" />
+                                <Button Content="Open Network Connections" Click="OpenNetworkConnections_Click" />
+                            </WrapPanel>
+
+                            <TextBlock Text="Tip: For driver-level settings, use Device Manager or Realtek's driver package if one exists for this adapter." TextWrapping="Wrap" Margin="4,14,4,0" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Available Networks">
+                    <DockPanel Margin="8">
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                            <Button Content="Refresh / Scan" Click="ScanNetworks_Click" />
+                            <Button Content="Connect Using Saved Profile" Click="ConnectSelectedNetwork_Click" />
+                            <TextBlock VerticalAlignment="Center" Margin="10,0,0,0" Text="Double-click a network to copy SSID into profile form." />
+                        </StackPanel>
+
+                        <DataGrid x:Name="NetworksGrid" MouseDoubleClick="NetworksGrid_MouseDoubleClick">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="SSID" Binding="{Binding Ssid}" Width="2*" />
+                                <DataGridTextColumn Header="Signal %" Binding="{Binding SignalQuality}" Width="90" />
+                                <DataGridTextColumn Header="Auth" Binding="{Binding Authentication}" Width="160" />
+                                <DataGridTextColumn Header="Encryption" Binding="{Binding Encryption}" Width="150" />
+                                <DataGridCheckBoxColumn Header="Secure" Binding="{Binding SecurityEnabled}" Width="80" />
+                                <DataGridCheckBoxColumn Header="Connectable" Binding="{Binding Connectable}" Width="100" />
+                                <DataGridTextColumn Header="BSS Type" Binding="{Binding BssType}" Width="140" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+
+                <TabItem Header="Profiles">
+                    <Grid Margin="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <DataGrid x:Name="ProfilesGrid">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Profile Name" Binding="{Binding Name}" Width="*" />
+                                <DataGridTextColumn Header="Flags" Binding="{Binding Flags}" Width="120" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Border Grid.Row="1" BorderBrush="#D1D5DB" BorderThickness="1" Padding="10" Margin="4">
+                            <StackPanel>
+                                <TextBlock Text="Add / Replace Profile" FontWeight="Bold" FontSize="16" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="SSID" VerticalAlignment="Center" />
+                                    <TextBox x:Name="ProfileSsidTextBox" Grid.Row="0" Grid.Column="1" />
+
+                                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Security" VerticalAlignment="Center" />
+                                    <ComboBox x:Name="SecurityComboBox" Grid.Row="0" Grid.Column="3" SelectedIndex="0">
+                                        <ComboBoxItem Content="WPA2-Personal AES" />
+                                        <ComboBoxItem Content="Open / No Password" />
+                                    </ComboBox>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Password" VerticalAlignment="Center" />
+                                    <PasswordBox x:Name="ProfilePasswordBox" Grid.Row="1" Grid.Column="1" />
+
+                                    <CheckBox x:Name="AutoConnectCheckBox" Grid.Row="1" Grid.Column="3" Content="Auto connect" IsChecked="True" VerticalAlignment="Center" />
+                                </Grid>
+                                <WrapPanel>
+                                    <Button Content="Save Profile" Click="SaveProfile_Click" />
+                                    <Button Content="Connect Selected Profile" Click="ConnectSelectedProfile_Click" />
+                                    <Button Content="Delete Selected Profile" Click="DeleteSelectedProfile_Click" />
+                                    <Button Content="Duplicate Selected Profile" Click="DuplicateSelectedProfile_Click" />
+                                    <Button Content="Reload Profiles" Click="ReloadProfiles_Click" />
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="Status">
+                    <StackPanel Margin="12">
+                        <Button Content="Refresh Status" HorizontalAlignment="Left" Click="RefreshStatus_Click" />
+                        <Grid Margin="4,12,4,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" FontWeight="Bold" Text="Adapter" />
+                            <TextBlock x:Name="StatusAdapterText" Grid.Row="0" Grid.Column="1" TextWrapping="Wrap" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" FontWeight="Bold" Text="Windows Alias" />
+                            <TextBlock x:Name="StatusAliasText" Grid.Row="1" Grid.Column="1" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" FontWeight="Bold" Text="Interface GUID" />
+                            <TextBlock x:Name="StatusGuidText" Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" FontWeight="Bold" Text="State" />
+                            <TextBlock x:Name="StatusStateText" Grid.Row="3" Grid.Column="1" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" FontWeight="Bold" Text="MAC Address" />
+                            <TextBlock x:Name="StatusMacText" Grid.Row="4" Grid.Column="1" />
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" FontWeight="Bold" Text="IPv4 Address" />
+                            <TextBlock x:Name="StatusIpText" Grid.Row="5" Grid.Column="1" />
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" FontWeight="Bold" Text="Gateway" />
+                            <TextBlock x:Name="StatusGatewayText" Grid.Row="6" Grid.Column="1" />
+
+                            <TextBlock Grid.Row="7" Grid.Column="0" FontWeight="Bold" Text="DNS" />
+                            <TextBlock x:Name="StatusDnsText" Grid.Row="7" Grid.Column="1" TextWrapping="Wrap" />
+                        </Grid>
+                    </StackPanel>
+                </TabItem>
+
+                <TabItem Header="Virtual WiFi / AP Mode">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="12">
+                            <TextBlock FontSize="18" FontWeight="Bold" Text="Windows 11 AP / Hotspot Helper" />
+                            <TextBlock Margin="0,8,0,12" TextWrapping="Wrap" Text="This page replaces the old Realtek Soft AP screen with Windows 11-safe controls. It checks whether the selected adapter supports legacy Hosted Network Soft AP and gives you the practical path when the driver blocks it." />
+
+                            <WrapPanel Margin="0,0,0,10">
+                                <Button Content="Refresh AP Support" Click="RefreshApSupport_Click" />
+                                <Button Content="Open Mobile Hotspot Settings" Click="OpenHotspotSettings_Click" />
+                                <Button Content="Open Network Connections" Click="OpenNetworkConnections_Click" />
+                                <Button Content="Open Device Manager" Click="OpenDeviceManager_Click" />
+                                <Button Content="Copy AP Diagnostic" Click="CopyApDiagnostic_Click" />
+                            </WrapPanel>
+
+                            <Border BorderBrush="#D1D5DB" BorderThickness="1" Padding="12" Margin="0,0,0,12">
+                                <StackPanel>
+                                    <TextBlock Text="Selected Adapter AP Capability" FontSize="16" FontWeight="Bold" />
+                                    <Grid Margin="0,10,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="210" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0" FontWeight="Bold" Text="Interface" />
+                                        <TextBlock x:Name="ApInterfaceText" Grid.Row="0" Grid.Column="1" Text="Unknown" TextWrapping="Wrap" />
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0" FontWeight="Bold" Text="Driver" />
+                                        <TextBlock x:Name="ApDriverText" Grid.Row="1" Grid.Column="1" Text="Unknown" TextWrapping="Wrap" />
+
+                                        <TextBlock Grid.Row="2" Grid.Column="0" FontWeight="Bold" Text="Vendor / Provider" />
+                                        <TextBlock x:Name="ApVendorText" Grid.Row="2" Grid.Column="1" Text="Unknown" TextWrapping="Wrap" />
+
+                                        <TextBlock Grid.Row="3" Grid.Column="0" FontWeight="Bold" Text="Driver Version" />
+                                        <TextBlock x:Name="ApVersionText" Grid.Row="3" Grid.Column="1" Text="Unknown" TextWrapping="Wrap" />
+
+                                        <TextBlock Grid.Row="4" Grid.Column="0" FontWeight="Bold" Text="Radio Types" />
+                                        <TextBlock x:Name="ApRadioTypesText" Grid.Row="4" Grid.Column="1" Text="Unknown" TextWrapping="Wrap" />
+
+                                        <TextBlock Grid.Row="5" Grid.Column="0" FontWeight="Bold" Text="Hosted Network Soft AP" />
+                                        <TextBlock x:Name="ApHostedNetworkText" Grid.Row="5" Grid.Column="1" Text="Unknown" TextWrapping="Wrap" FontWeight="SemiBold" />
+
+                                        <TextBlock Grid.Row="6" Grid.Column="0" FontWeight="Bold" Text="Wireless Display" />
+                                        <TextBlock x:Name="ApWirelessDisplayText" Grid.Row="6" Grid.Column="1" Text="Unknown" TextWrapping="Wrap" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border BorderBrush="#D1D5DB" BorderThickness="1" Padding="12" Margin="0,0,0,12">
+                                <StackPanel>
+                                    <TextBlock Text="Recommendation" FontSize="16" FontWeight="Bold" />
+                                    <TextBlock x:Name="ApRecommendationText" TextWrapping="Wrap" Margin="0,8,0,0" Text="Select an adapter and click Refresh AP Support." />
+                                </StackPanel>
+                            </Border>
+
+                            <Border BorderBrush="#D1D5DB" BorderThickness="1" Padding="12" Margin="0,0,0,12">
+                                <StackPanel>
+                                    <TextBlock Text="Advanced AP Controls" FontSize="16" FontWeight="Bold" />
+                                    <TextBlock Margin="0,6,0,10" TextWrapping="Wrap" Text="These old Realtek utility controls are visible for transparency, but Windows 11 does not expose them through normal desktop app APIs on this driver." />
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="210" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0" FontWeight="Bold" Text="Beacon Interval" />
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Locked — not exposed by current Windows 11 Wi‑Fi APIs" TextWrapping="Wrap" />
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0" FontWeight="Bold" Text="DTIM Period" />
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="Locked — not exposed by current Windows 11 Wi‑Fi APIs" TextWrapping="Wrap" />
+
+                                        <TextBlock Grid.Row="2" Grid.Column="0" FontWeight="Bold" Text="Preamble Mode" />
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="Locked — driver/firmware controlled" TextWrapping="Wrap" />
+
+                                        <TextBlock Grid.Row="3" Grid.Column="0" FontWeight="Bold" Text="Channel" />
+                                        <TextBlock Grid.Row="3" Grid.Column="1" Text="Controlled by Windows, router, driver, or Mobile Hotspot backend" TextWrapping="Wrap" />
+
+                                        <TextBlock Grid.Row="4" Grid.Column="0" FontWeight="Bold" Text="Legacy Hosted Network" />
+                                        <TextBlock Grid.Row="4" Grid.Column="1" Text="Only available if netsh reports Hosted network supported: Yes" TextWrapping="Wrap" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <TextBox x:Name="ApDiagnosticTextBox" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" IsReadOnly="True" MinHeight="150" Text="AP diagnostic output will appear here." />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Adapter Controls">
+                    <StackPanel Margin="12">
+                        <TextBlock FontSize="18" FontWeight="Bold" Text="Administrative Adapter Controls" />
+                        <TextBlock Margin="0,8,0,12" TextWrapping="Wrap" Text="Disable/enable commands will ask for administrator permission." />
+                        <WrapPanel>
+                            <Button Content="Disable Selected Adapter" Click="DisableAdapter_Click" />
+                            <Button Content="Enable Adapter By Name" Click="EnableAdapter_Click" />
+                        </WrapPanel>
+                        <TextBlock Margin="4,14,4,0" TextWrapping="Wrap" Text="v1.1 fix: these buttons now use the Windows interface alias, such as Wi-Fi or Wi-Fi 2, instead of the longer driver description. That makes Disable-NetAdapter / Enable-NetAdapter target the correct adapter." />
+                    </StackPanel>
+                </TabItem>
+            </TabControl>
+        </Grid>
+    </DockPanel>
+</Window>
